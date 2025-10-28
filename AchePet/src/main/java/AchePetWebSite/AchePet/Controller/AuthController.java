@@ -49,4 +49,4 @@ public class AuthController {
         usuarioService.deletarPorId(id);
         return "Usuário deletado com sucesso!";
     }
-}
+} // muito baitola
