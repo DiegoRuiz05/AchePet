@@ -1,10 +1,6 @@
 package AchePetWebSite.AchePet.Model;
 
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class CadastroPetAdocao {
@@ -13,8 +9,8 @@ public class CadastroPetAdocao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-
-
+    private String nomePet;
+    private String tipo;
     private String raca;
     private String cor;
     private String porte;
@@ -23,91 +19,47 @@ public class CadastroPetAdocao {
     private String bairro;
     private String telefone;
     private String email;
-    //*cep
-    public CadastroPetAdocao(){}
+    private String descricao;
+    private String imagemUrl;
 
-    public CadastroPetAdocao(long id, String raca, String cor, String porte, String estado, String cidade, String bairro, String telefone, String email) {
-        this.id = id;
-        this.raca = raca;
-        this.cor = cor;
-        this.porte = porte;
-        this.estado = estado;
-        this.cidade = cidade;
-        this.bairro = bairro;
-        this.telefone = telefone;
-        this.email = email;
-    }
+    public CadastroPetAdocao() {}
 
-    public long getId() {
-        return id;
-    }
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
 
-    public void setId(long id) {
-        this.id = id;
-    }
+    public String getNomePet() { return nomePet; }
+    public void setNomePet(String nomePet) { this.nomePet = nomePet; }
 
-    public String getRaca() {
-        return raca;
-    }
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
 
-    public void setRaca(String raca) {
-        this.raca = raca;
-    }
+    public String getRaca() { return raca; }
+    public void setRaca(String raca) { this.raca = raca; }
 
-    public String getCor() {
-        return cor;
-    }
+    public String getCor() { return cor; }
+    public void setCor(String cor) { this.cor = cor; }
 
-    public void setCor(String cor) {
-        this.cor = cor;
-    }
+    public String getPorte() { return porte; }
+    public void setPorte(String porte) { this.porte = porte; }
 
-    public String getPorte() {
-        return porte;
-    }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public void setPorte(String porte) {
-        this.porte = porte;
-    }
+    public String getCidade() { return cidade; }
+    public void setCidade(String cidade) { this.cidade = cidade; }
 
-    public String getEstado() {
-        return estado;
-    }
+    public String getBairro() { return bairro; }
+    public void setBairro(String bairro) { this.bairro = bairro; }
 
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
+    public String getTelefone() { return telefone; }
+    public void setTelefone(String telefone) { this.telefone = telefone; }
 
-    public String getCidade() {
-        return cidade;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setCidade(String cidade) {
-        this.cidade = cidade;
-    }
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
 
-    public String getBairro() {
-        return bairro;
-    }
-
-    public void setBairro(String bairro) {
-        this.bairro = bairro;
-    }
-
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getImagemUrl() { return imagemUrl; }
+    public void setImagemUrl(String imagemUrl) { this.imagemUrl = imagemUrl; }
 }
-
