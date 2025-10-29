@@ -45,7 +45,8 @@ public class PetService {
         return null;
     }
 
+
     public void deletarPorId(Long id) {
         petAdocaoRepository.deleteById(id);
     }
-}
+}//service do pet
