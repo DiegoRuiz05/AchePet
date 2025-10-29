@@ -59,6 +59,7 @@ public class UsuarioService {
             if (atualizado.getSenha() != null && !atualizado.getSenha().isEmpty()) {
                 usuario.setSenha(passwordEncoder.encode(atualizado.getSenha()));
             }
+
             return usuarioRepository.save(usuario);
         }).orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
     }
