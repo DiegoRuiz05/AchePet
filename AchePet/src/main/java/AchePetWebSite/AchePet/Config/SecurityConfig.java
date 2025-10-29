@@ -17,5 +17,5 @@ public class SecurityConfig {
                 );
         return http.build();
     }
-}
+}//adicionei classe de config
 
