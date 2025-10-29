@@ -10,4 +10,4 @@ public class MainController {
     public String hello() {
         return "Hello World, Spring Boot está rodando 🚀";
     }
-}
+} //controller principal
