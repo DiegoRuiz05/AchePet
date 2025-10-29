@@ -63,4 +63,4 @@ public class UsuarioService {
             return usuarioRepository.save(usuario);
         }).orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
     }
-}
+}//repositorio usuario
