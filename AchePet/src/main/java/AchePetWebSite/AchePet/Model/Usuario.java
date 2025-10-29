@@ -77,4 +77,4 @@ public class Usuario {
     public void setSenha(String senha) { this.senha = senha; }
     public LocalDateTime getDataCadastro() { return dataCadastro; }
     public void setDataCadastro(LocalDateTime dataCadastro) { this.dataCadastro = dataCadastro; }
-}
+}//classe usuario
