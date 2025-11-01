@@ -28,8 +28,6 @@ public class PetService {
     public CadastroPetAdocao atualizar(Long id, CadastroPetAdocao atualizado) {
         CadastroPetAdocao existente = petAdocaoRepository.findById(id).orElse(null);
         if (existente != null) {
-            existente.setNomePet(atualizado.getNomePet());
-            existente.setTipo(atualizado.getTipo());
             existente.setRaca(atualizado.getRaca());
             existente.setCor(atualizado.getCor());
             existente.setPorte(atualizado.getPorte());
@@ -38,8 +36,7 @@ public class PetService {
             existente.setBairro(atualizado.getBairro());
             existente.setTelefone(atualizado.getTelefone());
             existente.setEmail(atualizado.getEmail());
-            existente.setDescricao(atualizado.getDescricao());
-            existente.setImagemUrl(atualizado.getImagemUrl());
+
             return petAdocaoRepository.save(existente);
         }
         return null;
