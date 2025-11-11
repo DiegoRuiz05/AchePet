@@ -9,150 +9,69 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cd_id_usuario")
-    private Long id;
+    private Long cdIdUsuario;
 
-    @Column(name = "nm_nome", nullable = false, length = 60)
-    private String nome;
+    private String nmNome;
 
-    @Column(name = "nm_sobrenome", length = 100)
-    private String sobrenome;
+    private String nmSobrenome;
 
-    @Column(name = "nm_usuario", nullable = false, unique = true, length = 50)
-    private String usuario;
+    @Column(unique = true, nullable = false)
+    private String nmUsuario;
 
-    @Column(name = "cd_cpf", nullable = false, unique = true, length = 14)
-    private String cpf;
+    @Column(unique = true, nullable = false, length = 14)
+    private String cdCpf;
 
-    @Column(name = "nm_email", nullable = false, unique = true, length = 100)
-    private String email;
+    @Column(unique = true, nullable = false)
+    private String nmEmail;
 
-    @Column(name = "cd_telefone", length = 20)
-    private String telefone;
+    private String cdTelefone;
+//    private String cdCep;
+//    private String nmEstado;
+//    private String nmCidade;
+//    private String nmBairro;
 
-    @Column(name = "cd_cep", length = 9)
-    private String cep;
+    @Column(nullable = false)
+    private String dsSenha;
 
-    @Column(name = "nm_estado", length = 30)
-    private String estado;
+    private LocalDateTime dtCadastro = LocalDateTime.now();
 
-    @Column(name = "nm_cidade", length = 100)
-    private String cidade;
+    // getters e setters
+    public Long getCdIdUsuario() { return cdIdUsuario; }
+    public void setCdIdUsuario(Long cdIdUsuario) { this.cdIdUsuario = cdIdUsuario; }
 
-    @Column(name = "nm_bairro", length = 100)
-    private String bairro;
+    public String getNmNome() { return nmNome; }
+    public void setNmNome(String nmNome) { this.nmNome = nmNome; }
 
-    @Column(name = "ds_senha", nullable = false, length = 255)
-    private String senha;
+    public String getNmSobrenome() { return nmSobrenome; }
+    public void setNmSobrenome(String nmSobrenome) { this.nmSobrenome = nmSobrenome; }
 
-    @Column(name = "dt_cadastro")
-    private LocalDateTime dataCadastro;
+    public String getNmUsuario() { return nmUsuario; }
+    public void setNmUsuario(String nmUsuario) { this.nmUsuario = nmUsuario; }
 
-    public Usuario() {
-        this.dataCadastro = LocalDateTime.now();
-    }
+    public String getCdCpf() { return cdCpf; }
+    public void setCdCpf(String cdCpf) { this.cdCpf = cdCpf; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getNmEmail() { return nmEmail; }
+    public void setNmEmail(String nmEmail) { this.nmEmail = nmEmail; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getCdTelefone() { return cdTelefone; }
+    public void setCdTelefone(String cdTelefone) { this.cdTelefone = cdTelefone; }
 
-    public String getNome() {
-        return nome;
-    }
+//    public String getCdCep() { return cdCep; }
+//    public void setCdCep(String cdCep) { this.cdCep = cdCep; }
+//
+//    public String getNmEstado() { return nmEstado; }
+//    public void setNmEstado(String nmEstado) { this.nmEstado = nmEstado; }
+//
+//    public String getNmCidade() { return nmCidade; }
+//    public void setNmCidade(String nmCidade) { this.nmCidade = nmCidade; }
+//
+//    public String getNmBairro() { return nmBairro; }
+//    public void setNmBairro(String nmBairro) { this.nmBairro = nmBairro; }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public String getDsSenha() { return dsSenha; }
+    public void setDsSenha(String dsSenha) { this.dsSenha = dsSenha; }
 
-    public String getSobrenome() {
-        return sobrenome;
-    }
-
-    public void setSobrenome(String sobrenome) {
-        this.sobrenome = sobrenome;
-    }
-
-    public String getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(String usuario) {
-        this.usuario = usuario;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public String getCep() {
-        return cep;
-    }
-
-    public void setCep(String cep) {
-        this.cep = cep;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-    public String getCidade() {
-        return cidade;
-    }
-
-    public void setCidade(String cidade) {
-        this.cidade = cidade;
-    }
-
-    public String getBairro() {
-        return bairro;
-    }
-
-    public void setBairro(String bairro) {
-        this.bairro = bairro;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
-    public LocalDateTime getDataCadastro() {
-        return dataCadastro;
-    }
-
-    public void setDataCadastro(LocalDateTime dataCadastro) {
-        this.dataCadastro = dataCadastro;
-    }
-}//classe usuario
+    public LocalDateTime getDtCadastro() { return dtCadastro; }
+    public void setDtCadastro(LocalDateTime dtCadastro) { this.dtCadastro = dtCadastro; }
+}
