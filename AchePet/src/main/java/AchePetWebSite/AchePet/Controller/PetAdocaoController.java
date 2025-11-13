@@ -1,5 +1,6 @@
 package AchePetWebSite.AchePet.Controller;
 
+import AchePetWebSite.AchePet.Model.ImagemPet;
 import AchePetWebSite.AchePet.Model.PetAdocao;
 import AchePetWebSite.AchePet.Model.Usuario;
 import AchePetWebSite.AchePet.Repository.PetAdocaoRepository;
@@ -7,7 +8,12 @@ import AchePetWebSite.AchePet.Repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.File;
+import java.io.IOException;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -20,6 +26,8 @@ public class PetAdocaoController {
 
     @Autowired
     private UsuarioRepository usuarioRepo;
+
+    private static final String UPLOAD_DIR = System.getProperty("user.home") + "/Desktop/ImagemPets/";
 
     @PostMapping
     public ResponseEntity<?> createPet(@RequestBody PetAdocao pet) {
@@ -36,6 +44,68 @@ public class PetAdocaoController {
         petRepo.save(pet);
         return ResponseEntity.ok(pet);
     }
+
+    @PostMapping("/upload/{idPet}")
+    public ResponseEntity<?> uploadPetImages(@PathVariable Long idPet,
+                                             @RequestParam("imagens") List<MultipartFile> imagens) {
+        try {
+            Optional<PetAdocao> petOpt = petRepo.findById(idPet);
+            if (petOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Pet não encontrado.");
+            }
+
+            PetAdocao pet = petOpt.get();
+
+            int totalExistentes = pet.getImagens().size();
+            if (totalExistentes + imagens.size() > 4) {
+                return ResponseEntity.badRequest().body("Limite de 4 imagens por pet excedido.");
+            }
+
+            final String IMAGE_UPLOAD_DIR = "C:\\Users\\Diego\\Desktop\\ImagemPets\\";
+            File pasta = new File(IMAGE_UPLOAD_DIR);
+            if (!pasta.exists()) pasta.mkdirs();
+
+            for (MultipartFile imagem : imagens) {
+                String nomeArquivo = System.currentTimeMillis() + "_" + imagem.getOriginalFilename();
+                File destino = new File(IMAGE_UPLOAD_DIR + nomeArquivo);
+                imagem.transferTo(destino);
+
+                ImagemPet imgPet = new ImagemPet();
+                imgPet.setNomeArquivo(nomeArquivo);
+                imgPet.setUrlImagem(destino.getAbsolutePath()); //*
+                imgPet.setPetAdocao(pet);
+
+                pet.getImagens().add(imgPet);
+            }
+
+            petRepo.save(pet);
+
+            return ResponseEntity.ok("Imagens salvas com sucesso!");
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("Erro ao salvar imagens: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/imagens")
+    public ResponseEntity<?> listarImagensDoPet(@PathVariable Long id) {
+        Optional<PetAdocao> petOpt = petRepo.findById(id);
+        if (petOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        PetAdocao pet = petOpt.get();
+
+        // Retorna apenas nome e URL
+        List<Map<String, String>> imagens = pet.getImagens().stream()
+                .map(img -> Map.of(
+                        "idImagem", img.getId().toString(),
+                        "urlImagem", "http://localhost:8080/imagens/" + img.getNomeArquivo()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(imagens);
+    }
+
 
     @GetMapping
     public ResponseEntity<?> getAllPets() {
@@ -81,125 +151,3 @@ public class PetAdocaoController {
         return ResponseEntity.ok("Pet deletado com sucesso!");
     }
 }
-
-
-
-//package AchePetWebSite.AchePet.Controller;
-//
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//import AchePetWebSite.AchePet.Model.PetAdocao;
-//import AchePetWebSite.AchePet.Model.Usuario;
-//import AchePetWebSite.AchePet.Repository.PetAdocaoRepository;
-//import AchePetWebSite.AchePet.Repository.UsuarioRepository;
-//import AchePetWebSite.AchePet.Service.AuthService;
-//
-//import java.net.URI;
-//import java.util.List;
-//import java.util.Optional;
-//
-//@RestController
-//@RequestMapping("/api/pets")
-//public class PetAdocaoController {
-//
-//    private final PetAdocaoRepository petRepo;
-//    private final UsuarioRepository usuarioRepo;
-//    private final AuthService authService;
-//
-//    public PetAdocaoController(PetAdocaoRepository petRepo, UsuarioRepository usuarioRepo, AuthService authService) {
-//        this.petRepo = petRepo;
-//        this.usuarioRepo = usuarioRepo;
-//        this.authService = authService;
-//    }
-//
-//    // Listar todos
-//    @GetMapping
-//    public ResponseEntity<List<PetAdocao>> listAll() {
-//        return ResponseEntity.ok(petRepo.findAll());
-//    }
-//
-//    // Buscar por id
-//    @GetMapping("/{id}")
-//    public ResponseEntity<PetAdocao> getById(@PathVariable Long id) {
-//        return petRepo.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-//    }
-//
-//    // Criar pet (requer token do usuário criador no header "X-AUTH-TOKEN")
-//    @PostMapping
-//    public ResponseEntity<?> create(@RequestHeader(name = "X-AUTH-TOKEN", required = false) String token,
-//                                    @RequestBody PetAdocao pet) {
-//        if (token == null) {
-//            return ResponseEntity.status(401).body("É necessário o header X-AUTH-TOKEN");
-//        }
-//        Optional<Long> userId = authService.validateToken(token);
-//        if (userId.isEmpty()) {
-//            return ResponseEntity.status(401).body("Token inválido");
-//        }
-//        Optional<Usuario> u = usuarioRepo.findById(userId.get());
-//        if (u.isEmpty()) return ResponseEntity.status(401).body("Usuário não encontrado");
-//        pet.setUsuario(u.get());
-//        PetAdocao saved = petRepo.save(pet);
-//        return ResponseEntity.created(URI.create("/api/pets/" + saved.getCdIdPetAdocao())).body(saved);
-//    }
-//
-//    // Atualizar pet (requer token do usuário criador)
-//    @PutMapping("/{id}")
-//    public ResponseEntity<?> update(@RequestHeader(name = "X-AUTH-TOKEN", required = false) String token,
-//                                    @PathVariable Long id,
-//                                    @RequestBody PetAdocao pet) {
-//        if (token == null) {
-//            return ResponseEntity.status(401).body("É necessário o header X-AUTH-TOKEN");
-//        }
-//        Optional<Long> userId = authService.validateToken(token);
-//        if (userId.isEmpty()) {
-//            return ResponseEntity.status(401).body("Token inválido");
-//        }
-//        Optional<PetAdocao> existing = petRepo.findById(id);
-//        if (existing.isEmpty()) return ResponseEntity.notFound().build();
-//        PetAdocao p = existing.get();
-//        if (p.getUsuario() == null || !p.getUsuario().getCdIdUsuario().equals(userId.get())) {
-//            return ResponseEntity.status(403).body("Só o dono pode editar o pet");
-//        }
-//        // atualizar campos permitidos
-//        p.setNmEspecie(pet.getNmEspecie());
-//        p.setNmRaca(pet.getNmRaca());
-//        p.setDsPorte(pet.getDsPorte());
-//        p.setDsCor(pet.getDsCor());
-//        p.setNmPet(pet.getNmPet());
-//        p.setDsIdade(pet.getDsIdade());
-//        p.setIcCastrado(pet.getIcCastrado());
-//        p.setIcVacinado(pet.getIcVacinado());
-//        p.setIcDisponivelEntrega(pet.getIcDisponivelEntrega());
-//        p.setDsDescricao(pet.getDsDescricao());
-//        p.setNmEstado(pet.getNmEstado());
-//        p.setNmCidade(pet.getNmCidade());
-//        p.setNmBairro(pet.getNmBairro());
-//        p.setCdTelefone(pet.getCdTelefone());
-//        p.setNmEmail(pet.getNmEmail());
-//        p.setDsStatus(pet.getDsStatus());
-//
-//        petRepo.save(p);
-//        return ResponseEntity.ok(p);
-//    }
-//
-//    // Excluir pet (só dono)
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<?> delete(@RequestHeader(name = "X-AUTH-TOKEN", required = false) String token,
-//                                    @PathVariable Long id) {
-//        if (token == null) {
-//            return ResponseEntity.status(401).body("É necessário o header X-AUTH-TOKEN");
-//        }
-//        Optional<Long> userId = authService.validateToken(token);
-//        if (userId.isEmpty()) {
-//            return ResponseEntity.status(401).body("Token inválido");
-//        }
-//        Optional<PetAdocao> existing = petRepo.findById(id);
-//        if (existing.isEmpty()) return ResponseEntity.notFound().build();
-//        PetAdocao p = existing.get();
-//        if (p.getUsuario() == null || !p.getUsuario().getCdIdUsuario().equals(userId.get())) {
-//            return ResponseEntity.status(403).body("Só o dono pode excluir o pet");
-//        }
-//        petRepo.delete(p);
-//        return ResponseEntity.noContent().build();
-//    }
-//}

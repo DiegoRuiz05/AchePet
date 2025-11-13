@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
-    // mapa token -> usuarioId
     private final Map<String, Long> tokenStore = new ConcurrentHashMap<>();
 
     public AuthService(UsuarioRepository usuarioRepository) {
@@ -19,7 +18,6 @@ public class AuthService {
     }
 
     public Usuario register(Usuario usuario) {
-        // assumindo validações mínimas feitas pelo controller
         return usuarioRepository.save(usuario);
     }
 

@@ -22,7 +22,6 @@ public class AuthController {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // registro
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Usuario usuario) {
         if (usuario.getNmUsuario() == null || usuario.getDsSenha() == null || usuario.getNmEmail() == null || usuario.getCdCpf() == null) {
@@ -42,7 +41,6 @@ public class AuthController {
         return ResponseEntity.created(URI.create("/api/auth/user/" + saved.getCdIdUsuario())).body(saved);
     }
 
-    // login: retorna token simples
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         String nmUsuario = body.get("nmUsuario");
@@ -58,7 +56,6 @@ public class AuthController {
         }
     }
 
-    // endpoint para ver info do user por id (opcional)
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getUser(@PathVariable Long id) {
         return usuarioRepository.findById(id)

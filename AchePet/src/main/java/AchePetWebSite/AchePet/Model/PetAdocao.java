@@ -1,7 +1,10 @@
 package AchePetWebSite.AchePet.Model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "PET_ADOCAO")
@@ -27,21 +30,32 @@ public class PetAdocao {
     private String nmBairro;
     private String cdTelefone;
     private String nmEmail;
-
+    @Column(name = "caminho_imagem")
+    private String caminhoImagem;
     private String dsStatus = "ATIVO";
-
     private LocalDateTime dtRegistro = LocalDateTime.now();
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "cd_id_usuario")
-//    private Usuario usuario;
+
 
     // 🔗 Ligação com o usuário
     @ManyToOne
     @JoinColumn(name = "cd_id_usuario")
     private Usuario usuario;
 
-    // ⚙️ Campo auxiliar para receber o id do usuário no JSON
+    @OneToMany(mappedBy = "petAdocao", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<ImagemPet> imagens = new ArrayList<>();
+
+
+    public List<ImagemPet> getImagens() {
+        return imagens;
+    }
+
+    public void setImagens(List<ImagemPet> imagens) {
+        this.imagens = imagens;
+    }
+
+
     @Transient
     private Long cdIdUsuario;
 
@@ -102,6 +116,15 @@ public class PetAdocao {
 
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public String getCaminhoImagem() {
+        return caminhoImagem;
+    }
+
+    public void setCaminhoImagem(String caminhoImagem) {
+        this.caminhoImagem = caminhoImagem;
+    }
+
 
     public Long getCdIdUsuario() {
         return cdIdUsuario;

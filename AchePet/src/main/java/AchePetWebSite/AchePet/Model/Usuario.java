@@ -25,10 +25,6 @@ public class Usuario {
     private String nmEmail;
 
     private String cdTelefone;
-//    private String cdCep;
-//    private String nmEstado;
-//    private String nmCidade;
-//    private String nmBairro;
 
     @Column(nullable = false)
     private String dsSenha;
@@ -57,17 +53,6 @@ public class Usuario {
     public String getCdTelefone() { return cdTelefone; }
     public void setCdTelefone(String cdTelefone) { this.cdTelefone = cdTelefone; }
 
-//    public String getCdCep() { return cdCep; }
-//    public void setCdCep(String cdCep) { this.cdCep = cdCep; }
-//
-//    public String getNmEstado() { return nmEstado; }
-//    public void setNmEstado(String nmEstado) { this.nmEstado = nmEstado; }
-//
-//    public String getNmCidade() { return nmCidade; }
-//    public void setNmCidade(String nmCidade) { this.nmCidade = nmCidade; }
-//
-//    public String getNmBairro() { return nmBairro; }
-//    public void setNmBairro(String nmBairro) { this.nmBairro = nmBairro; }
 
     public String getDsSenha() { return dsSenha; }
     public void setDsSenha(String dsSenha) { this.dsSenha = dsSenha; }
