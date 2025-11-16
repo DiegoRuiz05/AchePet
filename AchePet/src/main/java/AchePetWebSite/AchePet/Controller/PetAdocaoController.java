@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,8 +48,10 @@ public class PetAdocaoController {
     }
 
     @PostMapping("/upload/{idPet}")
-    public ResponseEntity<?> uploadPetImages(@PathVariable Long idPet,
-                                             @RequestParam("imagens") List<MultipartFile> imagens) {
+    public ResponseEntity<?> uploadPetImages(
+            @PathVariable Long idPet,
+            @RequestParam("imagens") List<MultipartFile> imagens) {
+
         try {
             Optional<PetAdocao> petOpt = petRepo.findById(idPet);
             if (petOpt.isEmpty()) {
@@ -61,9 +65,12 @@ public class PetAdocaoController {
                 return ResponseEntity.badRequest().body("Limite de 4 imagens por pet excedido.");
             }
 
-            final String IMAGE_UPLOAD_DIR = "C:\\Users\\Diego\\Desktop\\ImagemPets\\";
+            final String IMAGE_UPLOAD_DIR = System.getProperty("user.home") + "/AchePetUploads/";
             File pasta = new File(IMAGE_UPLOAD_DIR);
             if (!pasta.exists()) pasta.mkdirs();
+
+            // Lista para retornar os links
+            List<Map<String, String>> linksImagens = new java.util.ArrayList<>();
 
             for (MultipartFile imagem : imagens) {
                 String nomeArquivo = System.currentTimeMillis() + "_" + imagem.getOriginalFilename();
@@ -72,20 +79,36 @@ public class PetAdocaoController {
 
                 ImagemPet imgPet = new ImagemPet();
                 imgPet.setNomeArquivo(nomeArquivo);
-                imgPet.setUrlImagem(destino.getAbsolutePath()); //*
+                imgPet.setUrlImagem(destino.getAbsolutePath());
                 imgPet.setPetAdocao(pet);
 
                 pet.getImagens().add(imgPet);
+
+                // URL pública da imagem
+                String urlPublica = "http://localhost:8080/imagens/" + nomeArquivo;
+
+                linksImagens.add(
+                        Map.of(
+                                "nome", nomeArquivo,
+                                "url", urlPublica
+                        )
+                );
             }
 
             petRepo.save(pet);
 
-            return ResponseEntity.ok("Imagens salvas com sucesso!");
+            return ResponseEntity.ok(
+                    Map.of(
+                            "mensagem", "Imagens salvas com sucesso!",
+                            "imagens", linksImagens
+                    )
+            );
 
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Erro ao salvar imagens: " + e.getMessage());
         }
     }
+
 
     @GetMapping("/{id}/imagens")
     public ResponseEntity<?> listarImagensDoPet(@PathVariable Long id) {
@@ -95,15 +118,57 @@ public class PetAdocaoController {
         }
         PetAdocao pet = petOpt.get();
 
-        // Retorna apenas nome e URL
+        // Retorna apenas nome e URL, codificando nomes de arquivos com espaços/acentos
         List<Map<String, String>> imagens = pet.getImagens().stream()
-                .map(img -> Map.of(
-                        "idImagem", img.getId().toString(),
-                        "urlImagem", "http://localhost:8080/imagens/" + img.getNomeArquivo()
-                ))
+                .map(img -> {
+                    String nomeArquivoCodificado = URLEncoder.encode(img.getNomeArquivo(), StandardCharsets.UTF_8);
+                    return Map.of(
+                            "idImagem", img.getId().toString(),
+                            "urlImagem", "http://localhost:8080/imagens/" + nomeArquivoCodificado
+                    );
+                })
                 .toList();
 
         return ResponseEntity.ok(imagens);
+    }
+
+    @DeleteMapping("/{idPet}/imagens/{idImagem}")
+    public ResponseEntity<?> deletarImagem(@PathVariable Long idPet, @PathVariable Long idImagem) {
+        Optional<PetAdocao> petOpt = petRepo.findById(idPet);
+        if (petOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Pet não encontrado.");
+        }
+
+        PetAdocao pet = petOpt.get();
+
+        // Busca a imagem pelo id
+        Optional<ImagemPet> imgOpt = pet.getImagens().stream()
+                .filter(img -> img.getId().equals(idImagem))
+                .findFirst();
+
+        if (imgOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Imagem não encontrada.");
+        }
+
+        ImagemPet imagem = imgOpt.get();
+
+        // Remove do banco
+        pet.getImagens().remove(imagem);
+        petRepo.save(pet);
+
+        // Remove arquivo físico
+        final String IMAGE_UPLOAD_DIR = System.getProperty("user.home") + "/AchePetUploads/";
+        File arquivo = new File(IMAGE_UPLOAD_DIR + imagem.getNomeArquivo());
+        if (arquivo.exists()) {
+            if (!arquivo.delete()) {
+                return ResponseEntity.internalServerError().body("Erro ao deletar o arquivo da imagem.");
+            }
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "mensagem", "Imagem deletada com sucesso!",
+                "idImagem", idImagem
+        ));
     }
 
 
