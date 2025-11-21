@@ -1,5 +1,6 @@
 package AchePetWebSite.AchePet.Service;
 
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import AchePetWebSite.AchePet.Model.Usuario;
 import AchePetWebSite.AchePet.Repository.UsuarioRepository;
@@ -18,6 +19,9 @@ public class AuthService {
     }
 
     public Usuario register(Usuario usuario) {
+        // hash da senha antes de salvar
+        String hashed = BCrypt.hashpw(usuario.getDsSenha(), BCrypt.gensalt());
+        usuario.setDsSenha(hashed);
         return usuarioRepository.save(usuario);
     }
 
@@ -25,7 +29,7 @@ public class AuthService {
         Optional<Usuario> userOpt = usuarioRepository.findByNmUsuario(nmUsuario);
         if (userOpt.isPresent()) {
             Usuario u = userOpt.get();
-            if (u.getDsSenha().equals(dsSenha)) {
+            if (BCrypt.checkpw(dsSenha, u.getDsSenha())) {
                 String token = UUID.randomUUID().toString();
                 tokenStore.put(token, u.getCdIdUsuario());
                 return Optional.of(token);
@@ -38,7 +42,6 @@ public class AuthService {
         return Optional.ofNullable(tokenStore.get(token));
     }
 
-    // opcional: logout
     public void logout(String token) {
         tokenStore.remove(token);
     }

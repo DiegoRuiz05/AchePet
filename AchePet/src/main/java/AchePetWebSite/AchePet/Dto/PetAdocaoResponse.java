@@ -1,60 +1,33 @@
-package AchePetWebSite.AchePet.Model;
+package AchePetWebSite.AchePet.Dto;
 
-import jakarta.persistence.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
+public class PetAdocaoResponse {
 
-@Entity
-@Table(name = "PET_ADOCAO")
-public class PetAdocao {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // Dados gerais do pet
     private String especie;
+    private String nome;
     private String raca;
     private String porte;
     private String cor;
-    private String nome;
     private String idade;
-
-    private boolean castrado;
-    private boolean vacinado;
-    private boolean disponivelEntrega;
-
+    private Boolean castrado;
+    private Boolean vacinado;
+    private Boolean disponivelEntrega;
     private String descricao;
-
-    // Localização
     private String estado;
     private String cidade;
     private String bairro;
-
-    // Contato
     private String telefone;
     private String email;
 
-    // Caminho da imagem salva no projeto
-    private String caminhoImagem;
+    private String caminhoImagem; // agora virá do salvamento real
 
 
-    private String Status;
+    private String status;        // ATIVO / INATIVO
+    private String dataRegistro;  // convertido para String
 
-    @Column(name = "data_registro")
-    private LocalDateTime dataRegistro;
-
-
-
-    // Relacionamento com o usuário
-    @ManyToOne
-    @JoinColumn(name = "id_usuario")
-    private Usuario usuario;
-
-    public PetAdocao() {}
-
-    // Getters e Setters completos
-
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -69,6 +42,14 @@ public class PetAdocao {
 
     public void setEspecie(String especie) {
         this.especie = especie;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     public String getRaca() {
@@ -95,14 +76,6 @@ public class PetAdocao {
         this.cor = cor;
     }
 
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
     public String getIdade() {
         return idade;
     }
@@ -111,27 +84,27 @@ public class PetAdocao {
         this.idade = idade;
     }
 
-    public boolean isCastrado() {
+    public Boolean getCastrado() {
         return castrado;
     }
 
-    public void setCastrado(boolean castrado) {
+    public void setCastrado(Boolean castrado) {
         this.castrado = castrado;
     }
 
-    public boolean isVacinado() {
+    public Boolean getVacinado() {
         return vacinado;
     }
 
-    public void setVacinado(boolean vacinado) {
+    public void setVacinado(Boolean vacinado) {
         this.vacinado = vacinado;
     }
 
-    public boolean isDisponivelEntrega() {
+    public Boolean getDisponivelEntrega() {
         return disponivelEntrega;
     }
 
-    public void setDisponivelEntrega(boolean disponivelEntrega) {
+    public void setDisponivelEntrega(Boolean disponivelEntrega) {
         this.disponivelEntrega = disponivelEntrega;
     }
 
@@ -192,26 +165,20 @@ public class PetAdocao {
     }
 
     public String getStatus() {
-        return Status;
+        return status;
     }
 
     public void setStatus(String status) {
-        Status = status;
+        this.status = status;
     }
 
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public LocalDateTime getDataRegistro() {
+    public String getDataRegistro() {
         return dataRegistro;
     }
 
-    public void setDataRegistro(LocalDateTime dataRegistro) {
+    public void setDataRegistro(String dataRegistro) {
         this.dataRegistro = dataRegistro;
     }
+
+
 }

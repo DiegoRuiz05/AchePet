@@ -2,6 +2,7 @@ package AchePetWebSite.AchePet.Model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "USUARIO")
@@ -11,6 +12,7 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cdIdUsuario;
 
+    @Column(nullable = false)
     private String nmNome;
 
     private String nmSobrenome;
@@ -26,10 +28,16 @@ public class Usuario {
 
     private String cdTelefone;
 
+
+
     @Column(nullable = false)
-    private String dsSenha;
+    private String dsSenha; // será armazenada como hash
 
     private LocalDateTime dtCadastro = LocalDateTime.now();
+
+    // Relacionamento com pets
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PetAdocao> pets; // classe Pet que vamos criar
 
     // getters e setters
     public Long getCdIdUsuario() { return cdIdUsuario; }
@@ -59,4 +67,7 @@ public class Usuario {
 
     public LocalDateTime getDtCadastro() { return dtCadastro; }
     public void setDtCadastro(LocalDateTime dtCadastro) { this.dtCadastro = dtCadastro; }
+
+    public List<PetAdocao> getPets() { return pets; }
+    public void setPets(List<PetAdocao> pets) { this.pets = pets; }
 }
