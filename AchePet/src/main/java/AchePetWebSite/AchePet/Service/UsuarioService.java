@@ -156,4 +156,19 @@ public class UsuarioService {
 
         return new UsuarioCompletoResponse(usuario, petsResponse);
     }
+
+    public UsuarioResponse atualizarUsuario(Long id, UsuarioRequest r) {
+
+        Usuario u = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        // Somente estes 3 campos podem ser atualizados
+        u.setNmNome(r.getNmNome());
+        u.setNmSobrenome(r.getNmSobrenome());
+        u.setCdTelefone(r.getCdTelefone());
+
+        usuarioRepository.save(u);
+
+        return new UsuarioResponse(u);
+    }
 }

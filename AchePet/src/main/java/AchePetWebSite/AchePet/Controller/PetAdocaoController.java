@@ -106,4 +106,14 @@ public class PetAdocaoController {
         petAdocaoService.deletarPet(id, cdIdUsuario);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{id}/imagens")
+    public ResponseEntity<PetAdocaoImagensResponse> deletarImagem(
+            @PathVariable("id") Long id,
+            @RequestParam("cdIdUsuario") Long cdIdUsuario,
+            @RequestParam("imagem") String caminhoImagem
+    ) {
+        PetAdocaoImagensResponse resp = petAdocaoService.deletarImagem(id, cdIdUsuario, caminhoImagem);
+        return ResponseEntity.ok(resp);
+    }
 }

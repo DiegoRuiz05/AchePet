@@ -80,6 +80,15 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.listarTodos());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponse> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioRequest request
+    ) {
+        UsuarioResponse resp = usuarioService.atualizarUsuario(id, request);
+        return ResponseEntity.ok(resp);
+    }
+
     // ===========================================================
     // DELETAR USUÁRIO
     // ===========================================================

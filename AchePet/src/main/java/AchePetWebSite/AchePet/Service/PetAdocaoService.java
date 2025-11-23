@@ -147,6 +147,52 @@ public class PetAdocaoService {
     }
 
 
+
+    //Deletar imagem
+    public PetAdocaoImagensResponse deletarImagem(Long petId, Long cdIdUsuario, String caminhoImagem) {
+
+        PetAdocao pet = petAdocaoRepository.findById(petId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pet não encontrado"));
+
+        // Verifica se o pet pertence ao usuário
+        if (pet.getUsuario() == null || !pet.getUsuario().getCdIdUsuario().equals(cdIdUsuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para alterar este pet");
+        }
+
+        // Carregar imagens atuais
+        List<String> imagensAtuais = safeParseImageJson(pet.getDsCaminhoImagem());
+
+        if (!imagensAtuais.contains(caminhoImagem)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Imagem não encontrada");
+        }
+
+        // Remove imagem da lista
+        imagensAtuais.remove(caminhoImagem);
+
+        try {
+            // Salvar lista atualizada
+            String json = mapper.writeValueAsString(imagensAtuais);
+            pet.setDsCaminhoImagem(json);
+            petAdocaoRepository.save(pet);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao atualizar imagens");
+        }
+
+        // Excluir arquivo físico (opcional, mas recomendado)
+        try {
+            Path filePath = Paths.get(caminhoImagem).normalize();
+            Files.deleteIfExists(filePath);
+        } catch (IOException ignored) {
+        }
+
+        return new PetAdocaoImagensResponse(
+                petId,
+                "Imagem removida com sucesso",
+                imagensAtuais
+        );
+    }
+
+
     // ============================================================
     // 3) Buscar por ID (com imagens)
     // ============================================================
