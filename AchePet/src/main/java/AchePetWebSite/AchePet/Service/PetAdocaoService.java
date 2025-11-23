@@ -1,166 +1,319 @@
 package AchePetWebSite.AchePet.Service;
 
-import AchePetWebSite.AchePet.Dto.PetAdocaoRequest;
+import AchePetWebSite.AchePet.Dto.PetAdocaoCadastroRequest;
+import AchePetWebSite.AchePet.Dto.PetAdocaoCadastroResponse;
+import AchePetWebSite.AchePet.Dto.PetAdocaoImagensResponse;
 import AchePetWebSite.AchePet.Dto.PetAdocaoResponse;
 import AchePetWebSite.AchePet.Model.PetAdocao;
 import AchePetWebSite.AchePet.Model.Usuario;
 import AchePetWebSite.AchePet.Repository.PetAdocaoRepository;
 import AchePetWebSite.AchePet.Repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PetAdocaoService {
 
-    @Autowired
-    private PetAdocaoRepository petAdocaoRepository;
+    private final PetAdocaoRepository petAdocaoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final ObjectMapper mapper;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    @Value("${achepet.upload.dir:uploads/pets/}")
+    private String uploadDir;
 
+    public PetAdocaoService(
+            PetAdocaoRepository petAdocaoRepository,
+            UsuarioRepository usuarioRepository,
+            ObjectMapper mapper
+    ) {
+        this.petAdocaoRepository = petAdocaoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.mapper = mapper;
+    }
 
     // ============================================================
-    // CADASTRAR PET ADOÇÃO
+    // 1) Criar PET (somente JSON)
     // ============================================================
-    public PetAdocaoResponse cadastrarPetAdocao(PetAdocaoRequest req, Long idUsuario) {
+    public PetAdocaoCadastroResponse criarPet(PetAdocaoCadastroRequest req) {
 
-        Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+        Usuario usuario = usuarioRepository.findById(req.getCdIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
         PetAdocao pet = new PetAdocao();
 
-        // Mapeamento 100% alinhado com sua entidade e DTO
-        pet.setEspecie(req.getEspecie());
-        pet.setNome(req.getNome());
-        pet.setRaca(req.getRaca());
-        pet.setPorte(req.getPorte());
-        pet.setCor(req.getCor());
-        pet.setIdade(req.getIdade());
-        pet.setCastrado(req.getCastrado());
-        pet.setVacinado(req.getVacinado());
-        pet.setDisponivelEntrega(req.getDisponivelEntrega());
-        pet.setDescricao(req.getDescricao());
-        pet.setEstado(req.getEstado());
-        pet.setCidade(req.getCidade());   // CORRIGIDO
-        pet.setBairro(req.getBairro());
-        pet.setTelefone(req.getTelefone());
-        pet.setEmail(req.getEmail());
-        pet.setDataRegistro(LocalDateTime.now());
-
+        pet.setNmEspecie(req.getNmEspecie());
+        pet.setNmRaca(req.getNmRaca());
+        pet.setDsPorte(req.getDsPorte());
+        pet.setDsCor(req.getDsCor());
+        pet.setNmPet(req.getNmPet());
+        pet.setDsIdade(req.getDsIdade());
+        pet.setIcCastrado(req.getIcCastrado());
+        pet.setIcVacinado(req.getIcVacinado());
+        pet.setIcDisponivelEntrega(req.getIcDisponivelEntrega());
+        pet.setDsDescricao(req.getDsDescricao());
+        pet.setNmEstado(req.getNmEstado());
+        pet.setNmCidade(req.getNmCidade());
+        pet.setNmBairro(req.getNmBairro());
+        pet.setCdTelefone(req.getCdTelefone());
+        pet.setNmEmail(req.getNmEmail());
+        pet.setDsStatus(req.getDsStatus() != null ? req.getDsStatus() : "ATIVO");
+        pet.setDtRegistro(LocalDateTime.now());
         pet.setUsuario(usuario);
 
-        // Upload de imagem
-        if (req.getImagem() != null && !req.getImagem().isEmpty()) {
-            String caminhoSalvo = salvarImagem(req.getImagem());
-            pet.setCaminhoImagem(caminhoSalvo);
+        PetAdocao salvo = petAdocaoRepository.save(pet);
+
+        return new PetAdocaoCadastroResponse(salvo.getCdIdPetAdocao(), "Pet cadastrado com sucesso");
+    }
+
+    // ============================================================
+    // 2) Upload de IMAGENS (multipart) — salva JSON limpo (array)
+    // ============================================================
+    public PetAdocaoImagensResponse salvarImagens(Long petId, List<MultipartFile> imagens) {
+
+        if (imagens == null || imagens.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pelo menos uma imagem é obrigatória");
         }
 
-        PetAdocao petSalvo = petAdocaoRepository.save(pet);
+        if (imagens.size() > 4) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Máximo de 4 imagens permitidas");
+        }
 
-        return converterParaResponse(petSalvo);
+        PetAdocao pet = petAdocaoRepository.findById(petId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pet não encontrado"));
+
+        ensureUploadDirExists();
+
+        List<String> novosCaminhos = new ArrayList<>();
+        int index = 1;
+
+        for (MultipartFile file : imagens) {
+
+            if (file == null || file.isEmpty()) continue;
+
+            String original = StringUtils.cleanPath(file.getOriginalFilename());
+            String ext = "";
+            int dot = original.lastIndexOf('.');
+            if (dot >= 0) ext = original.substring(dot);
+
+            String filename = petId + "_" + index++ + ext;
+
+            Path destino = Paths.get(uploadDir).resolve(filename).normalize();
+
+            try {
+                Files.copy(file.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao salvar a imagem");
+            }
+
+            String caminhoRelativo = uploadDir.endsWith("/") ? uploadDir + filename : uploadDir + "/" + filename;
+            novosCaminhos.add(caminhoRelativo);
+        }
+
+        // Ler imagens existentes (tratando formatos antigos) e mesclar
+        List<String> imagensExistentes = new ArrayList<>();
+        if (pet.getDsCaminhoImagem() != null && !pet.getDsCaminhoImagem().isBlank()) {
+            imagensExistentes = safeParseImageJson(pet.getDsCaminhoImagem());
+        }
+
+        imagensExistentes.addAll(novosCaminhos);
+
+        // Serializar sempre para JSON puro (array) — padrão daqui pra frente
+        try {
+            String jsonLimpo = mapper.writeValueAsString(imagensExistentes);
+            pet.setDsCaminhoImagem(jsonLimpo);
+            petAdocaoRepository.save(pet);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao salvar lista de imagens");
+        }
+
+        return new PetAdocaoImagensResponse(petId, "Imagens enviadas com sucesso", imagensExistentes);
     }
 
-
     // ============================================================
-    // LISTAR TODOS
-    // ============================================================
-    public List<PetAdocaoResponse> listarTodos() {
-        return petAdocaoRepository.findAll()
-                .stream()
-                .map(this::converterParaResponse)
-                .collect(Collectors.toList());
-    }
-
-
-    // ============================================================
-    // BUSCAR POR ID
+    // 3) Buscar por ID (com imagens)
     // ============================================================
     public PetAdocaoResponse buscarPorId(Long id) {
+
         PetAdocao pet = petAdocaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pet não encontrado."));
-        return converterParaResponse(pet);
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pet não encontrado"));
+
+        List<String> imagens = new ArrayList<>();
+        if (pet.getDsCaminhoImagem() != null && !pet.getDsCaminhoImagem().isBlank()) {
+            imagens = safeParseImageJson(pet.getDsCaminhoImagem());
+        }
+
+        return new PetAdocaoResponse(pet, imagens);
     }
 
+    // ============================================================
+    // 4) Listar todos
+    // ============================================================
+    public List<PetAdocaoResponse> listarTodos() {
+        List<PetAdocao> lista = petAdocaoRepository.findAll();
+        List<PetAdocaoResponse> resposta = new ArrayList<>();
+
+        for (PetAdocao p : lista) {
+            List<String> imagens = new ArrayList<>();
+            if (p.getDsCaminhoImagem() != null && !p.getDsCaminhoImagem().isBlank()) {
+                imagens = safeParseImageJson(p.getDsCaminhoImagem());
+            }
+            resposta.add(new PetAdocaoResponse(p, imagens));
+        }
+
+        return resposta;
+    }
 
     // ============================================================
-    // DELETAR
+    // 5) Listar por usuário
     // ============================================================
-    public void deletar(Long id) {
-        if (!petAdocaoRepository.existsById(id)) {
-            throw new RuntimeException("Pet não encontrado para exclusão.");
+    public List<PetAdocaoResponse> listarPorUsuario(Long usuarioId) {
+
+        List<PetAdocao> lista = petAdocaoRepository.findByUsuario_CdIdUsuario(usuarioId);
+
+        List<PetAdocaoResponse> resposta = new ArrayList<>();
+
+        for (PetAdocao p : lista) {
+            List<String> imagens = new ArrayList<>();
+            if (p.getDsCaminhoImagem() != null && !p.getDsCaminhoImagem().isBlank()) {
+                imagens = safeParseImageJson(p.getDsCaminhoImagem());
+            }
+            resposta.add(new PetAdocaoResponse(p, imagens));
         }
+
+        return resposta;
+    }
+
+    // ============================================================
+    // 6) Atualizar PET (somente dono)
+    // ============================================================
+    public PetAdocaoResponse atualizarPet(Long id, PetAdocaoCadastroRequest req, Long cdIdUsuario) {
+
+        PetAdocao pet = petAdocaoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pet não encontrado"));
+
+        if (pet.getUsuario() == null || !pet.getUsuario().getCdIdUsuario().equals(cdIdUsuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para alterar este pet");
+        }
+
+        pet.setNmEspecie(req.getNmEspecie());
+        pet.setNmRaca(req.getNmRaca());
+        pet.setDsPorte(req.getDsPorte());
+        pet.setDsCor(req.getDsCor());
+        pet.setNmPet(req.getNmPet());
+        pet.setDsIdade(req.getDsIdade());
+        pet.setIcCastrado(req.getIcCastrado());
+        pet.setIcVacinado(req.getIcVacinado());
+        pet.setIcDisponivelEntrega(req.getIcDisponivelEntrega());
+        pet.setDsDescricao(req.getDsDescricao());
+        pet.setNmEstado(req.getNmEstado());
+        pet.setNmCidade(req.getNmCidade());
+        pet.setNmBairro(req.getNmBairro());
+        pet.setCdTelefone(req.getCdTelefone());
+        pet.setNmEmail(req.getNmEmail());
+        pet.setDsStatus(req.getDsStatus());
+
+        PetAdocao atualizado = petAdocaoRepository.save(pet);
+
+        List<String> imagens = new ArrayList<>();
+        if (atualizado.getDsCaminhoImagem() != null && !atualizado.getDsCaminhoImagem().isBlank()) {
+            imagens = safeParseImageJson(atualizado.getDsCaminhoImagem());
+        }
+
+        return new PetAdocaoResponse(atualizado, imagens);
+    }
+
+    // ============================================================
+    // 7) Deletar PET (somente dono)
+    // ============================================================
+    public void deletarPet(Long id, Long cdIdUsuario) {
+
+        PetAdocao pet = petAdocaoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pet não encontrado"));
+
+        if (pet.getUsuario() == null || !pet.getUsuario().getCdIdUsuario().equals(cdIdUsuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para excluir este pet");
+        }
+
         petAdocaoRepository.deleteById(id);
     }
 
-
     // ============================================================
-    // SALVAR IMAGEM LOCAL
+    // Utilitário: Criar diretório caso não exista
     // ============================================================
-    private String salvarImagem(MultipartFile imagem) {
-
-        try {
-            String pasta = "src/main/resources/static/imagens/pets/";
-
-            File diretorio = new File(pasta);
-            if (!diretorio.exists()) {
-                diretorio.mkdirs();
+    private void ensureUploadDirExists() {
+        Path dir = Paths.get(uploadDir);
+        if (!Files.exists(dir)) {
+            try {
+                Files.createDirectories(dir);
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao criar pasta de upload");
             }
-
-            String nomeArquivo = System.currentTimeMillis() + "_" + imagem.getOriginalFilename();
-            File destino = new File(diretorio, nomeArquivo);
-
-            imagem.transferTo(destino);
-
-            return "/imagens/pets/" + nomeArquivo;
-
-        } catch (IOException e) {
-            throw new RuntimeException("Erro ao salvar imagem: " + e.getMessage());
         }
     }
 
-
-
     // ============================================================
-    // CONVERTER ENTIDADE → RESPONSE
+    // Utilitário: desserializar dsCaminhoImagem com tolerância
+    // - aceita JSON puro (["a","b"])
+    // - aceita string duplamente serializada ("[\"a\",\"b\"]")
+    // Retorna lista vazia em caso de falha
     // ============================================================
-    private PetAdocaoResponse converterParaResponse(PetAdocao pet) {
+    private List<String> safeParseImageJson(String raw) {
+        if (raw == null || raw.isBlank()) return new ArrayList<>();
 
-        PetAdocaoResponse resp = new PetAdocaoResponse();
+        // 1) Se já for um array JSON (começa com '['), parse direto
+        String trimmed = raw.trim();
+        try {
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                return mapper.readValue(trimmed, new TypeReference<List<String>>() {});
+            }
 
-        resp.setId(pet.getId());
-        resp.setEspecie(pet.getEspecie());
-        resp.setNome(pet.getNome());
-        resp.setRaca(pet.getRaca());
-        resp.setPorte(pet.getPorte());
-        resp.setCor(pet.getCor());
-        resp.setIdade(pet.getIdade());
-        resp.setCastrado(pet.isCastrado());
-        resp.setVacinado(pet.isVacinado());
-        resp.setDisponivelEntrega(pet.isDisponivelEntrega());
-        resp.setDescricao(pet.getDescricao());
-        resp.setEstado(pet.getEstado());
-        resp.setCidade(pet.getCidade());
-        resp.setBairro(pet.getBairro());
-        resp.setTelefone(pet.getTelefone());
-        resp.setEmail(pet.getEmail());
-        resp.setCaminhoImagem(pet.getCaminhoImagem());
-        resp.setStatus(pet.getStatus());
-        pet.setDataRegistro(LocalDateTime.now());
+            // 2) Caso esteja duplamente serializado: exemplo -> "\"[\\\"uploads/...\\\"]\""
+            // mapper.readValue(raw, String.class) remove as aspas externas/escapes
+            if ((trimmed.startsWith("\"[") && trimmed.endsWith("]\"")) || trimmed.startsWith("\"")) {
+                try {
+                    String unescaped = mapper.readValue(raw, String.class);
+                    if (unescaped != null) {
+                        String uTrim = unescaped.trim();
+                        if (uTrim.startsWith("[") && uTrim.endsWith("]")) {
+                            return mapper.readValue(uTrim, new TypeReference<List<String>>() {});
+                        }
+                    }
+                } catch (Exception inner) {
+                    // fallback to attempt to strip surrounding quotes manually
+                    String manual = trimmed;
+                    if (manual.startsWith("\"") && manual.endsWith("\"")) {
+                        manual = manual.substring(1, manual.length() - 1);
+                        // replace escaped quotes
+                        manual = manual.replace("\\\"", "\"");
+                        manual = manual.replace("\\\\", "\\");
+                    }
+                    if (manual.startsWith("[") && manual.endsWith("]")) {
+                        try {
+                            return mapper.readValue(manual, new TypeReference<List<String>>() {});
+                        } catch (Exception ex) {
+                            // fallthrough to return empty list
+                        }
+                    }
+                }
+            }
 
-        if (pet.getDataRegistro() != null) {
-            resp.setDataRegistro(
-                    pet.getDataRegistro().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-            );
+        } catch (Exception e) {
+            // se qualquer erro, não repassa exceção, apenas retorna lista vazia
         }
 
-        return resp;
+        return new ArrayList<>();
     }
 }

@@ -1,8 +1,9 @@
 package AchePetWebSite.AchePet.Model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "PET_ADOCAO")
@@ -10,193 +11,223 @@ public class PetAdocao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "cd_id_pet_adocao")
+    private Long cdIdPetAdocao;
 
-    // Dados gerais do pet
-    private String especie;
-    private String raca;
-    private String porte;
-    private String cor;
-    private String nome;
-    private String idade;
+    @Column(name = "nm_especie", nullable = false, length = 50)
+    private String nmEspecie;
 
-    private boolean castrado;
-    private boolean vacinado;
-    private boolean disponivelEntrega;
+    @Column(name = "nm_raca", length = 100)
+    private String nmRaca;
 
-    private String descricao;
+    @Column(name = "ds_porte", length = 30)
+    private String dsPorte;
 
-    // Localização
-    private String estado;
-    private String cidade;
-    private String bairro;
+    @Column(name = "ds_cor", length = 50)
+    private String dsCor;
 
-    // Contato
-    private String telefone;
-    private String email;
+    @Column(name = "nm_pet", length = 100)
+    private String nmPet;
 
-    // Caminho da imagem salva no projeto
-    private String caminhoImagem;
+    @Column(name = "ds_idade", length = 30)
+    private String dsIdade;
 
+    @Column(name = "ic_castrado")
+    private Boolean icCastrado;
 
-    private String Status;
+    @Column(name = "ic_vacinado")
+    private Boolean icVacinado;
 
-    @Column(name = "data_registro")
-    private LocalDateTime dataRegistro;
+    @Column(name = "ic_disponivel_entrega")
+    private Boolean icDisponivelEntrega;
 
+    @Column(name = "ds_descricao", length = 80)
+    private String dsDescricao;
 
+    @Column(name = "nm_estado", length = 30)
+    private String nmEstado;
 
-    // Relacionamento com o usuário
-    @ManyToOne
-    @JoinColumn(name = "id_usuario")
+    @Column(name = "nm_cidade", length = 100)
+    private String nmCidade;
+
+    @Column(name = "nm_bairro", length = 100)
+    private String nmBairro;
+
+    @Column(name = "cd_telefone", length = 20)
+    private String cdTelefone;
+
+    @Column(name = "nm_email", length = 100)
+    private String nmEmail;
+
+    // Campo JSON contendo a lista de caminhos de imagens
+    @Column(name = "ds_caminho_imagem", columnDefinition = "JSON")
+    private String dsCaminhoImagem;
+
+    // Status do pet: ATIVO ou INATIVO
+    @Column(name = "ds_status", columnDefinition = "ENUM('ATIVO','INATIVO') default 'ATIVO'")
+    private String dsStatus = "ATIVO";
+
+    @Column(name = "dt_registro")
+    private LocalDateTime dtRegistro = LocalDateTime.now();
+
+    // Relacionamento com USUARIO
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cd_id_usuario")
     private Usuario usuario;
 
     public PetAdocao() {}
 
-    // Getters e Setters completos
-
-    public Long getId() {
-        return id;
+    // Getter e Setter
+    public Long getCdIdPetAdocao() {
+        return cdIdPetAdocao;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setCdIdPetAdocao(Long cdIdPetAdocao) {
+        this.cdIdPetAdocao = cdIdPetAdocao;
     }
 
-    public String getEspecie() {
-        return especie;
+    public String getNmEspecie() {
+        return nmEspecie;
     }
 
-    public void setEspecie(String especie) {
-        this.especie = especie;
+    public void setNmEspecie(String nmEspecie) {
+        this.nmEspecie = nmEspecie;
     }
 
-    public String getRaca() {
-        return raca;
+    public String getNmRaca() {
+        return nmRaca;
     }
 
-    public void setRaca(String raca) {
-        this.raca = raca;
+    public void setNmRaca(String nmRaca) {
+        this.nmRaca = nmRaca;
     }
 
-    public String getPorte() {
-        return porte;
+    public String getDsPorte() {
+        return dsPorte;
     }
 
-    public void setPorte(String porte) {
-        this.porte = porte;
+    public void setDsPorte(String dsPorte) {
+        this.dsPorte = dsPorte;
     }
 
-    public String getCor() {
-        return cor;
+    public String getDsCor() {
+        return dsCor;
     }
 
-    public void setCor(String cor) {
-        this.cor = cor;
+    public void setDsCor(String dsCor) {
+        this.dsCor = dsCor;
     }
 
-    public String getNome() {
-        return nome;
+    public String getNmPet() {
+        return nmPet;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setNmPet(String nmPet) {
+        this.nmPet = nmPet;
     }
 
-    public String getIdade() {
-        return idade;
+    public String getDsIdade() {
+        return dsIdade;
     }
 
-    public void setIdade(String idade) {
-        this.idade = idade;
+    public void setDsIdade(String dsIdade) {
+        this.dsIdade = dsIdade;
     }
 
-    public boolean isCastrado() {
-        return castrado;
+    public Boolean getIcCastrado() {
+        return icCastrado;
     }
 
-    public void setCastrado(boolean castrado) {
-        this.castrado = castrado;
+    public void setIcCastrado(Boolean icCastrado) {
+        this.icCastrado = icCastrado;
     }
 
-    public boolean isVacinado() {
-        return vacinado;
+    public Boolean getIcVacinado() {
+        return icVacinado;
     }
 
-    public void setVacinado(boolean vacinado) {
-        this.vacinado = vacinado;
+    public void setIcVacinado(Boolean icVacinado) {
+        this.icVacinado = icVacinado;
     }
 
-    public boolean isDisponivelEntrega() {
-        return disponivelEntrega;
+    public Boolean getIcDisponivelEntrega() {
+        return icDisponivelEntrega;
     }
 
-    public void setDisponivelEntrega(boolean disponivelEntrega) {
-        this.disponivelEntrega = disponivelEntrega;
+    public void setIcDisponivelEntrega(Boolean icDisponivelEntrega) {
+        this.icDisponivelEntrega = icDisponivelEntrega;
     }
 
-    public String getDescricao() {
-        return descricao;
+    public String getDsDescricao() {
+        return dsDescricao;
     }
 
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
+    public void setDsDescricao(String dsDescricao) {
+        this.dsDescricao = dsDescricao;
     }
 
-    public String getEstado() {
-        return estado;
+    public String getNmEstado() {
+        return nmEstado;
     }
 
-    public void setEstado(String estado) {
-        this.estado = estado;
+    public void setNmEstado(String nmEstado) {
+        this.nmEstado = nmEstado;
     }
 
-    public String getCidade() {
-        return cidade;
+    public String getNmCidade() {
+        return nmCidade;
     }
 
-    public void setCidade(String cidade) {
-        this.cidade = cidade;
+    public void setNmCidade(String nmCidade) {
+        this.nmCidade = nmCidade;
     }
 
-    public String getBairro() {
-        return bairro;
+    public String getNmBairro() {
+        return nmBairro;
     }
 
-    public void setBairro(String bairro) {
-        this.bairro = bairro;
+    public void setNmBairro(String nmBairro) {
+        this.nmBairro = nmBairro;
     }
 
-    public String getTelefone() {
-        return telefone;
+    public String getCdTelefone() {
+        return cdTelefone;
     }
 
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
+    public void setCdTelefone(String cdTelefone) {
+        this.cdTelefone = cdTelefone;
     }
 
-    public String getEmail() {
-        return email;
+    public String getNmEmail() {
+        return nmEmail;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setNmEmail(String nmEmail) {
+        this.nmEmail = nmEmail;
     }
 
-    public String getCaminhoImagem() {
-        return caminhoImagem;
+    public String getDsCaminhoImagem() {
+        return dsCaminhoImagem;
     }
 
-    public void setCaminhoImagem(String caminhoImagem) {
-        this.caminhoImagem = caminhoImagem;
+    public void setDsCaminhoImagem(String dsCaminhoImagem) {
+        this.dsCaminhoImagem = dsCaminhoImagem;
     }
 
-    public String getStatus() {
-        return Status;
+    public String getDsStatus() {
+        return dsStatus;
     }
 
-    public void setStatus(String status) {
-        Status = status;
+    public void setDsStatus(String dsStatus) {
+        this.dsStatus = dsStatus;
+    }
+
+    public LocalDateTime getDtRegistro() {
+        return dtRegistro;
+    }
+
+    public void setDtRegistro(LocalDateTime dtRegistro) {
+        this.dtRegistro = dtRegistro;
     }
 
     public Usuario getUsuario() {
@@ -205,13 +236,5 @@ public class PetAdocao {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
-    }
-
-    public LocalDateTime getDataRegistro() {
-        return dataRegistro;
-    }
-
-    public void setDataRegistro(LocalDateTime dataRegistro) {
-        this.dataRegistro = dataRegistro;
     }
 }

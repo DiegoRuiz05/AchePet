@@ -1,63 +1,42 @@
 package AchePetWebSite.AchePet.Dto;
 
-import AchePetWebSite.AchePet.Model.PetAdocao;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+public class PetAdocaoCadastroRequest {
 
-public class PetAdocaoResponse {
-
-    private Long cdIdPetAdocao;
+    @NotBlank
     private String nmEspecie;
+
     private String nmRaca;
     private String dsPorte;
     private String dsCor;
     private String nmPet;
     private String dsIdade;
+
+    @NotNull
     private Boolean icCastrado;
+
+    @NotNull
     private Boolean icVacinado;
+
+    @NotNull
     private Boolean icDisponivelEntrega;
+
     private String dsDescricao;
     private String nmEstado;
     private String nmCidade;
     private String nmBairro;
     private String cdTelefone;
     private String nmEmail;
-    private List<String> imagens = new ArrayList<>();
     private String dsStatus;
-    private String dtRegistro; // formatado como String
 
-    public PetAdocaoResponse() {}
+    @NotNull
+    private Long cdIdUsuario;
 
-    // Construtor de conveniência: recebe a entidade e a lista já desserializada de imagens
-    public PetAdocaoResponse(PetAdocao p, List<String> imagensList) {
-        this.cdIdPetAdocao = p.getCdIdPetAdocao();
-        this.nmEspecie = p.getNmEspecie();
-        this.nmRaca = p.getNmRaca();
-        this.dsPorte = p.getDsPorte();
-        this.dsCor = p.getDsCor();
-        this.nmPet = p.getNmPet();
-        this.dsIdade = p.getDsIdade();
-        this.icCastrado = p.getIcCastrado();
-        this.icVacinado = p.getIcVacinado();
-        this.icDisponivelEntrega = p.getIcDisponivelEntrega();
-        this.dsDescricao = p.getDsDescricao();
-        this.nmEstado = p.getNmEstado();
-        this.nmCidade = p.getNmCidade();
-        this.nmBairro = p.getNmBairro();
-        this.cdTelefone = p.getCdTelefone();
-        this.nmEmail = p.getNmEmail();
-        this.imagens = imagensList != null ? imagensList : new ArrayList<>();
-        this.dsStatus = p.getDsStatus();
-        if (p.getDtRegistro() != null) {
-            this.dtRegistro = p.getDtRegistro().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        }
-    }
+    public PetAdocaoCadastroRequest() {}
 
     // Getters / Setters
-    public Long getCdIdPetAdocao() { return cdIdPetAdocao; }
-    public void setCdIdPetAdocao(Long cdIdPetAdocao) { this.cdIdPetAdocao = cdIdPetAdocao; }
     public String getNmEspecie() { return nmEspecie; }
     public void setNmEspecie(String nmEspecie) { this.nmEspecie = nmEspecie; }
     public String getNmRaca() { return nmRaca; }
@@ -88,10 +67,8 @@ public class PetAdocaoResponse {
     public void setCdTelefone(String cdTelefone) { this.cdTelefone = cdTelefone; }
     public String getNmEmail() { return nmEmail; }
     public void setNmEmail(String nmEmail) { this.nmEmail = nmEmail; }
-    public List<String> getImagens() { return imagens; }
-    public void setImagens(List<String> imagens) { this.imagens = imagens; }
     public String getDsStatus() { return dsStatus; }
     public void setDsStatus(String dsStatus) { this.dsStatus = dsStatus; }
-    public String getDtRegistro() { return dtRegistro; }
-    public void setDtRegistro(String dtRegistro) { this.dtRegistro = dtRegistro; }
+    public Long getCdIdUsuario() { return cdIdUsuario; }
+    public void setCdIdUsuario(Long cdIdUsuario) { this.cdIdUsuario = cdIdUsuario; }
 }
