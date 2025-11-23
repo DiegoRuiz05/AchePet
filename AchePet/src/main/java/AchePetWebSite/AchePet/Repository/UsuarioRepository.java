@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -25,4 +26,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // --- Novo: buscar usuário com pets carregados (fetch join) para evitar LazyInitializationException
     @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.pets WHERE u.cdIdUsuario = :id")
     Optional<Usuario> buscarUsuarioComPets(@Param("id") Long id);
+
+    @Query("""
+    SELECT u FROM Usuario u
+    LEFT JOIN FETCH u.pets
+""")
+    List<Usuario> buscarTodosComPets();
+
+
 }

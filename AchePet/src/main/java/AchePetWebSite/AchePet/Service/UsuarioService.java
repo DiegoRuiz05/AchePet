@@ -18,6 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.transaction.annotation.Transactional;
+
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,11 +70,13 @@ public class UsuarioService {
     // ===========================================================
     // LOGIN
     // ===========================================================
+    @Transactional
     public UsuarioCompletoResponse login(Optional<String> nmUsuario, Optional<String> nmEmail, String senha) {
 
-        Usuario usuario = nmUsuario
-                .flatMap(usuarioRepository::findByNmUsuario)
-                .or(() -> nmEmail.flatMap(usuarioRepository::findByNmEmail))
+        Usuario usuario = nmUsuario.isPresent()
+                ? usuarioRepository.findByNmUsuario(nmUsuario.get())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"))
+                : usuarioRepository.findByNmEmail(nmEmail.get())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"));
 
         if (!usuario.getDsSenha().equals(senha)) {
@@ -81,16 +86,18 @@ public class UsuarioService {
         return montarUsuarioCompleto(usuario);
     }
 
+
     // ===========================================================
     // LISTAR TODOS (COMPLETO + PETS + IMAGENS)
     // ===========================================================
     public List<UsuarioCompletoResponse> listarTodos() {
 
-        return usuarioRepository.findAll()
+        return usuarioRepository.buscarTodosComPets()
                 .stream()
-                .sorted(Comparator.comparingLong(Usuario::getCdIdUsuario)) // id crescente
+                .sorted(Comparator.comparingLong(Usuario::getCdIdUsuario))
                 .map(this::montarUsuarioCompleto)
                 .collect(Collectors.toList());
+
     }
 
     // ===========================================================
@@ -126,13 +133,23 @@ public class UsuarioService {
             List<String> imagens = new ArrayList<>();
 
             try {
-                if (p.getDsCaminhoImagem() != null) {
-                    imagens = mapper.readValue(
-                            p.getDsCaminhoImagem(),
-                            new TypeReference<List<String>>() {}
-                    );
+                String raw = p.getDsCaminhoImagem();
+
+                if (raw != null && !raw.isBlank()) {
+
+                    // Caso venha com escapes (Ex: "[\"uploads/pets/1_1.jpg\"]")
+                    if (raw.startsWith("\"") && raw.endsWith("\"")) {
+                        raw = raw.substring(1, raw.length() - 1);       // remove aspas externas
+                        raw = raw.replace("\\\"", "\"");                // remove escapes
+                    }
+
+                    imagens = mapper.readValue(raw, new TypeReference<List<String>>() {});
                 }
-            } catch (Exception ignored) {}
+
+            } catch (Exception e) {
+                System.out.println("Erro ao desserializar imagens: " + e.getMessage());
+            }
+
 
             petsResponse.add(new PetAdocaoResponse(p, imagens));
         }

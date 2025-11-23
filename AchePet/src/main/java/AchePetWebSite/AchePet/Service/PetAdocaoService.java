@@ -118,11 +118,16 @@ public class PetAdocaoService {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao salvar a imagem");
             }
 
-            String caminhoRelativo = uploadDir.endsWith("/") ? uploadDir + filename : uploadDir + "/" + filename;
-            novosCaminhos.add(caminhoRelativo);
+            // --------------------------------------------------------
+            // AJUSTE AQUI — SALVAR SOMENTE URL PÚBLICA:
+            // /uploads/1_1.jpg
+            // --------------------------------------------------------
+            String caminhoPublico = "/uploads/" + filename;
+
+            novosCaminhos.add(caminhoPublico);
         }
 
-        // Ler imagens existentes (tratando formatos antigos) e mesclar
+        // Manter imagens antigas (já em formato público ou não)
         List<String> imagensExistentes = new ArrayList<>();
         if (pet.getDsCaminhoImagem() != null && !pet.getDsCaminhoImagem().isBlank()) {
             imagensExistentes = safeParseImageJson(pet.getDsCaminhoImagem());
@@ -130,10 +135,9 @@ public class PetAdocaoService {
 
         imagensExistentes.addAll(novosCaminhos);
 
-        // Serializar sempre para JSON puro (array) — padrão daqui pra frente
         try {
-            String jsonLimpo = mapper.writeValueAsString(imagensExistentes);
-            pet.setDsCaminhoImagem(jsonLimpo);
+            String jsonFinal = mapper.writeValueAsString(imagensExistentes);
+            pet.setDsCaminhoImagem(jsonFinal);
             petAdocaoRepository.save(pet);
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao salvar lista de imagens");
@@ -141,6 +145,7 @@ public class PetAdocaoService {
 
         return new PetAdocaoImagensResponse(petId, "Imagens enviadas com sucesso", imagensExistentes);
     }
+
 
     // ============================================================
     // 3) Buscar por ID (com imagens)
@@ -208,6 +213,17 @@ public class PetAdocaoService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para alterar este pet");
         }
 
+        // ============================================================
+        // PRESERVAR IMAGENS EXISTENTES (ANTES DE ALTERAR O PET)
+        // ============================================================
+        List<String> imagensAtuais = new ArrayList<>();
+        if (pet.getDsCaminhoImagem() != null && !pet.getDsCaminhoImagem().isBlank()) {
+            imagensAtuais = safeParseImageJson(pet.getDsCaminhoImagem());
+        }
+
+        // ============================================================
+        // ATUALIZAR CAMPOS DO PET
+        // ============================================================
         pet.setNmEspecie(req.getNmEspecie());
         pet.setNmRaca(req.getNmRaca());
         pet.setDsPorte(req.getDsPorte());
@@ -225,8 +241,22 @@ public class PetAdocaoService {
         pet.setNmEmail(req.getNmEmail());
         pet.setDsStatus(req.getDsStatus());
 
+        // ============================================================
+        // RESTAURAR A LISTA DE IMAGENS APÓS A ATUALIZAÇÃO
+        // ============================================================
+        try {
+            String jsonImagens = mapper.writeValueAsString(imagensAtuais);
+            pet.setDsCaminhoImagem(jsonImagens);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao restaurar imagens do pet");
+        }
+
+        // ============================================================
+        // SALVAR O PET ATUALIZADO
+        // ============================================================
         PetAdocao atualizado = petAdocaoRepository.save(pet);
 
+        // Preparar lista final de imagens para resposta
         List<String> imagens = new ArrayList<>();
         if (atualizado.getDsCaminhoImagem() != null && !atualizado.getDsCaminhoImagem().isBlank()) {
             imagens = safeParseImageJson(atualizado.getDsCaminhoImagem());
@@ -234,6 +264,7 @@ public class PetAdocaoService {
 
         return new PetAdocaoResponse(atualizado, imagens);
     }
+
 
     // ============================================================
     // 7) Deletar PET (somente dono)
