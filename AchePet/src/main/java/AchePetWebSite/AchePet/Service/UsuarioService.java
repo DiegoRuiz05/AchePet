@@ -5,6 +5,9 @@ import AchePetWebSite.AchePet.Dto.UsuarioResponse;
 import AchePetWebSite.AchePet.Dto.UsuarioCompletoResponse;
 import AchePetWebSite.AchePet.Dto.PetAdocaoResponse;
 
+import AchePetWebSite.AchePet.Repository.PetPerdidoRepository;
+import AchePetWebSite.AchePet.Dto.PetPerdidoResponse;
+
 import AchePetWebSite.AchePet.Model.Usuario;
 import AchePetWebSite.AchePet.Model.PetAdocao;
 
@@ -29,13 +32,19 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PetAdocaoRepository petAdocaoRepository;
+    private final PetPerdidoRepository petPerdidoRepository;
+
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public UsuarioService(UsuarioRepository usuarioRepository,
-                          PetAdocaoRepository petAdocaoRepository) {
+    public UsuarioService(
+            UsuarioRepository usuarioRepository,
+            PetAdocaoRepository petAdocaoRepository,
+            PetPerdidoRepository petPerdidoRepository
+    ) {
         this.usuarioRepository = usuarioRepository;
         this.petAdocaoRepository = petAdocaoRepository;
+        this.petPerdidoRepository = petPerdidoRepository;
     }
 
     // ===========================================================
@@ -126,7 +135,10 @@ public class UsuarioService {
     // ===========================================================
     private UsuarioCompletoResponse montarUsuarioCompleto(Usuario usuario) {
 
-        List<PetAdocaoResponse> petsResponse = new ArrayList<>();
+        // -----------------------------------------------------------
+        // 1) Pets para Adoção
+        // -----------------------------------------------------------
+        List<PetAdocaoResponse> petsAdocaoResponse = new ArrayList<>();
 
         for (PetAdocao p : usuario.getPets()) {
 
@@ -137,25 +149,64 @@ public class UsuarioService {
 
                 if (raw != null && !raw.isBlank()) {
 
-                    // Caso venha com escapes (Ex: "[\"uploads/pets/1_1.jpg\"]")
                     if (raw.startsWith("\"") && raw.endsWith("\"")) {
-                        raw = raw.substring(1, raw.length() - 1);       // remove aspas externas
-                        raw = raw.replace("\\\"", "\"");                // remove escapes
+                        raw = raw.substring(1, raw.length() - 1);
+                        raw = raw.replace("\\\"", "\"");
                     }
 
                     imagens = mapper.readValue(raw, new TypeReference<List<String>>() {});
                 }
 
             } catch (Exception e) {
-                System.out.println("Erro ao desserializar imagens: " + e.getMessage());
+                System.out.println("Erro ao desserializar imagens PetAdocao: " + e.getMessage());
             }
 
-
-            petsResponse.add(new PetAdocaoResponse(p, imagens));
+            petsAdocaoResponse.add(new PetAdocaoResponse(p, imagens));
         }
 
-        return new UsuarioCompletoResponse(usuario, petsResponse);
+
+        // -----------------------------------------------------------
+        // 2) Pets Perdidos (NOVO)
+        // -----------------------------------------------------------
+        List<PetPerdidoResponse> petsPerdidosResponse = new ArrayList<>();
+
+        var petsPerdidos = petPerdidoRepository.findByUsuario_CdIdUsuario(usuario.getCdIdUsuario());
+
+        for (var p : petsPerdidos) {
+
+            List<String> imagens = new ArrayList<>();
+
+            try {
+                String raw = p.getDsCaminhoImagem();
+
+                if (raw != null && !raw.isBlank()) {
+
+                    if (raw.startsWith("\"") && raw.endsWith("\"")) {
+                        raw = raw.substring(1, raw.length() - 1);
+                        raw = raw.replace("\\\"", "\"");
+                    }
+
+                    imagens = mapper.readValue(raw, new TypeReference<List<String>>() {});
+                }
+
+            } catch (Exception e) {
+                System.out.println("Erro ao desserializar imagens PetPerdido: " + e.getMessage());
+            }
+
+            petsPerdidosResponse.add(new PetPerdidoResponse(p, imagens));
+        }
+
+
+        // -----------------------------------------------------------
+        // 3) Retorno COMPLETO (adoção + perdido)
+        // -----------------------------------------------------------
+        return new UsuarioCompletoResponse(
+                usuario,
+                petsAdocaoResponse,
+                petsPerdidosResponse
+        );
     }
+
 
     public UsuarioResponse atualizarUsuario(Long id, UsuarioRequest r) {
 

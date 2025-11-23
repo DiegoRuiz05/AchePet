@@ -1,6 +1,7 @@
 package AchePetWebSite.AchePet.Dto;
 
 import AchePetWebSite.AchePet.Model.Usuario;
+
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +16,15 @@ public class UsuarioCompletoResponse {
     private String nmEmail;
     private String cdTelefone;
     private String dtCadastro;
+
     private List<PetAdocaoResponse> pets = new ArrayList<>();
+    private List<PetPerdidoResponse> petsPerdidos = new ArrayList<>();
+
 
     public UsuarioCompletoResponse() {}
 
+
+    // Construtor usado antes da adição do Pet Perdido — mantém compatibilidade
     public UsuarioCompletoResponse(Usuario u, List<PetAdocaoResponse> pets) {
         this.cdIdUsuario = u.getCdIdUsuario();
         this.nmNome = u.getNmNome();
@@ -33,32 +39,112 @@ public class UsuarioCompletoResponse {
         }
 
         this.pets = pets != null ? pets : new ArrayList<>();
+        this.petsPerdidos = new ArrayList<>();
     }
 
-    public Long getCdIdUsuario() { return cdIdUsuario; }
-    public void setCdIdUsuario(Long cdIdUsuario) { this.cdIdUsuario = cdIdUsuario; }
 
-    public String getNmNome() { return nmNome; }
-    public void setNmNome(String nmNome) { this.nmNome = nmNome; }
+    // Novo construtor completo (adoção + perdido)
+    public UsuarioCompletoResponse(
+            Usuario u,
+            List<PetAdocaoResponse> pets,
+            List<PetPerdidoResponse> petsPerdidos
+    ) {
+        this.cdIdUsuario = u.getCdIdUsuario();
+        this.nmNome = u.getNmNome();
+        this.nmSobrenome = u.getNmSobrenome();
+        this.nmUsuario = u.getNmUsuario();
+        this.cdCpf = u.getCdCpf();
+        this.nmEmail = u.getNmEmail();
+        this.cdTelefone = u.getCdTelefone();
 
-    public String getNmSobrenome() { return nmSobrenome; }
-    public void setNmSobrenome(String nmSobrenome) { this.nmSobrenome = nmSobrenome; }
+        if (u.getDtCadastro() != null) {
+            this.dtCadastro = u.getDtCadastro().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
 
-    public String getNmUsuario() { return nmUsuario; }
-    public void setNmUsuario(String nmUsuario) { this.nmUsuario = nmUsuario; }
+        this.pets = pets != null ? pets : new ArrayList<>();
+        this.petsPerdidos = petsPerdidos != null ? petsPerdidos : new ArrayList<>();
+    }
 
-    public String getCdCpf() { return cdCpf; }
-    public void setCdCpf(String cdCpf) { this.cdCpf = cdCpf; }
 
-    public String getNmEmail() { return nmEmail; }
-    public void setNmEmail(String nmEmail) { this.nmEmail = nmEmail; }
+    // GETTERS E SETTERS
 
-    public String getCdTelefone() { return cdTelefone; }
-    public void setCdTelefone(String cdTelefone) { this.cdTelefone = cdTelefone; }
+    public Long getCdIdUsuario() {
+        return cdIdUsuario;
+    }
 
-    public String getDtCadastro() { return dtCadastro; }
-    public void setDtCadastro(String dtCadastro) { this.dtCadastro = dtCadastro; }
+    public void setCdIdUsuario(Long cdIdUsuario) {
+        this.cdIdUsuario = cdIdUsuario;
+    }
 
-    public List<PetAdocaoResponse> getPets() { return pets; }
-    public void setPets(List<PetAdocaoResponse> pets) { this.pets = pets; }
+    public String getNmNome() {
+        return nmNome;
+    }
+
+    public void setNmNome(String nmNome) {
+        this.nmNome = nmNome;
+    }
+
+    public String getNmSobrenome() {
+        return nmSobrenome;
+    }
+
+    public void setNmSobrenome(String nmSobrenome) {
+        this.nmSobrenome = nmSobrenome;
+    }
+
+    public String getNmUsuario() {
+        return nmUsuario;
+    }
+
+    public void setNmUsuario(String nmUsuario) {
+        this.nmUsuario = nmUsuario;
+    }
+
+    public String getCdCpf() {
+        return cdCpf;
+    }
+
+    public void setCdCpf(String cdCpf) {
+        this.cdCpf = cdCpf;
+    }
+
+    public String getNmEmail() {
+        return nmEmail;
+    }
+
+    public void setNmEmail(String nmEmail) {
+        this.nmEmail = nmEmail;
+    }
+
+    public String getCdTelefone() {
+        return cdTelefone;
+    }
+
+    public void setCdTelefone(String cdTelefone) {
+        this.cdTelefone = cdTelefone;
+    }
+
+    public String getDtCadastro() {
+        return dtCadastro;
+    }
+
+    public void setDtCadastro(String dtCadastro) {
+        this.dtCadastro = dtCadastro;
+    }
+
+    public List<PetAdocaoResponse> getPets() {
+        return pets;
+    }
+
+    public void setPets(List<PetAdocaoResponse> pets) {
+        this.pets = pets;
+    }
+
+    public List<PetPerdidoResponse> getPetsPerdidos() {
+        return petsPerdidos;
+    }
+
+    public void setPetsPerdidos(List<PetPerdidoResponse> petsPerdidos) {
+        this.petsPerdidos = petsPerdidos;
+    }
 }
