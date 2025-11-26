@@ -120,11 +120,10 @@ public class PetPerdidoService {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao salvar a imagem");
             }
 
-            String caminhoRelativo = uploadDir.endsWith("/")
-                    ? uploadDir + filename
-                    : uploadDir + "/" + filename;
+            // Salvar como URL pública: /uploads/pets-perdidos/2_1.jpg
+            String caminhoPublico = "/uploads/pets-perdidos/" + filename;
 
-            novosCaminhos.add(caminhoRelativo);
+            novosCaminhos.add(caminhoPublico);
         }
 
         List<String> imagensExistentes = new ArrayList<>();

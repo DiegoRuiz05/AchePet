@@ -120,9 +120,9 @@ public class PetAdocaoService {
 
             // --------------------------------------------------------
             // AJUSTE AQUI — SALVAR SOMENTE URL PÚBLICA:
-            // /uploads/1_1.jpg
+            // /uploads/pets/1_1.jpg
             // --------------------------------------------------------
-            String caminhoPublico = "/uploads/" + filename;
+            String caminhoPublico = "/uploads/pets/" + filename;
 
             novosCaminhos.add(caminhoPublico);
         }
